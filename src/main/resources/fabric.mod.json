@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "bowattack",
+  "version": "${version}",
+  "name": "Bow Attack",
+  "description": "All hostile mobs attack with weakness arrows.",
+  "authors": [
+    "Panda"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/bowattack/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.panda.bowattck.BowAttackMod"
+    ]
+  },
+  "mixins": [
+    "bowattck.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
