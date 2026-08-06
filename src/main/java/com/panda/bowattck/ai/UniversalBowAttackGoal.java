@@ -4,7 +4,8 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.mob.HostileEntity;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.mob.CreeperEntity;
 import net.minecraft.entity.projectile.ArrowEntity;
 import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.entity.projectile.ProjectileUtil;
@@ -16,14 +17,15 @@ import net.minecraft.sound.SoundEvents;
 import java.util.EnumSet;
 
 public class UniversalBowAttackGoal extends Goal {
-    private final HostileEntity mob;
+    // 更改为更通用的 MobEntity
+    private final MobEntity mob;
     private final double speed;
     private final float squaredRange;
     private LivingEntity target;
     private int attackTime = -1;
     private int seeTime = 0;
 
-    public UniversalBowAttackGoal(HostileEntity mob, double speed, float range) {
+    public UniversalBowAttackGoal(MobEntity mob, double speed, float range) {
         this.mob = mob;
         this.speed = speed;
         this.squaredRange = range * range;
@@ -72,7 +74,12 @@ public class UniversalBowAttackGoal extends Goal {
         if (distanceSq > this.squaredRange || this.seeTime < 5) {
             this.mob.getNavigation().startMovingTo(this.target, this.speed);
         } else {
-            this.mob.getNavigation().stop();
+            // 核心修改：如果是苦力怕，不停止移动，继续死磕贴脸，从而触发原版自爆 AI
+            if (this.mob instanceof CreeperEntity) {
+                this.mob.getNavigation().startMovingTo(this.target, this.speed);
+            } else {
+                this.mob.getNavigation().stop();
+            }
         }
 
         this.mob.getLookControl().lookAt(this.target, 30.0F, 30.0F);
@@ -90,8 +97,6 @@ public class UniversalBowAttackGoal extends Goal {
         
         PersistentProjectileEntity projectile = ProjectileUtil.createArrowProjectile(this.mob, arrowStack, 1.0F, bow);
         
-        // 核心逻辑：如果是普通箭矢实体，直接为其附加虚弱药水效果
-        // 持续时间 200 ticks (10秒)，等级 0 (虚弱 I)
         if (projectile instanceof ArrowEntity arrowEntity) {
             arrowEntity.addEffect(new StatusEffectInstance(StatusEffects.WEAKNESS, 200, 0));
         }
@@ -103,8 +108,11 @@ public class UniversalBowAttackGoal extends Goal {
         
         projectile.setVelocity(d, e + g * 0.2D, f, 1.6F, (float)(14 - this.mob.getWorld().getDifficulty().getId() * 4));
         
+        // 动物射箭时，声音的来源判定使用 NEUTRAL（中立），敌对生物使用 HOSTILE
+        SoundCategory category = (this.mob instanceof net.minecraft.entity.mob.HostileEntity) ? SoundCategory.HOSTILE : SoundCategory.NEUTRAL;
+        
         this.mob.getWorld().playSound(null, this.mob.getX(), this.mob.getY(), this.mob.getZ(), 
-                SoundEvents.ENTITY_SKELETON_SHOOT, SoundCategory.HOSTILE, 1.0F, 1.0F / (this.mob.getRandom().nextFloat() * 0.4F + 0.8F));
+                SoundEvents.ENTITY_SKELETON_SHOOT, category, 1.0F, 1.0F / (this.mob.getRandom().nextFloat() * 0.4F + 0.8F));
         
         this.mob.getWorld().spawnEntity(projectile);
     }
