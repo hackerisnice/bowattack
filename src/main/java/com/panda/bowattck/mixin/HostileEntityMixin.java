@@ -50,32 +50,32 @@ public abstract class HostileEntityMixin extends LivingEntity {
             // 严格验证：只对 Minecraft 原版生物生效
             if ("minecraft".equals(entityId.getNamespace())) {
                 
-                // 情况 1：原版敌对生物 (包括苦力怕)
-                if (mob instanceof HostileEntity) {
-                    mob.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
-                    mob.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.0f);
+                // 情况 1：原版敌对生物
+                // 使用 instanceof 模式匹配，直接将强转后的对象命名为 hostile
+                if (mob instanceof HostileEntity hostile) {
+                    hostile.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
+                    hostile.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.0f);
 
-                    // 统一清除所有怪物的近战和原有弓箭 AI 
-                    // (苦力怕的爆炸 AI 属于 CreeperIgniteGoal，不会被清除)
                     this.goalSelector.clear(goal -> 
                         goal instanceof MeleeAttackGoal || 
                         goal instanceof BowAttackGoal
                     );
                     
-                    this.goalSelector.add(2, new UniversalBowAttackGoal(mob, 1.0D, 16.0F));
+                    this.goalSelector.add(2, new UniversalBowAttackGoal(hostile, 1.0D, 16.0F));
                 } 
                 // 情况 2：原版动物生物 (羊、牛、猪、鸡等)
-                else if (mob instanceof AnimalEntity) {
-                    mob.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
-                    mob.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.0f);
+                // 使用 instanceof 模式匹配，直接将强转后的对象命名为 animal
+                else if (mob instanceof AnimalEntity animal) {
+                    animal.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
+                    animal.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.0f);
 
-                    // 给动物强制加上“挨打反击”的目标 AI (优先级 1，最高)
-                    this.targetSelector.add(1, new RevengeGoal(mob));
+                    // AnimalEntity 继承自 PathAwareEntity，所以直接传入 animal 完美符合语法要求
+                    this.targetSelector.add(1, new RevengeGoal(animal));
                     
-                    // 给动物加上我们的弓箭攻击 AI (当它们有目标时，就会射箭)
-                    this.goalSelector.add(2, new UniversalBowAttackGoal(mob, 1.0D, 16.0F));
+                    this.goalSelector.add(2, new UniversalBowAttackGoal(animal, 1.0D, 16.0F));
                 }
             }
         }
     }
+
 }
