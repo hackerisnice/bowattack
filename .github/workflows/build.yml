@@ -1,0 +1,32 @@
+name: Build Fabric Mod
+
+# 允许在 GitHub Actions 页面手动触发
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build Mod with Gradle
+        run: ./gradlew build
+
+      - name: Upload Mod Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bowattack-mod-jar
+          # Fabric 构建的产物通常在 build/libs 目录下
+          path: build/libs/*.jar
